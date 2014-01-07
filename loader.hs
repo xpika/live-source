@@ -44,4 +44,5 @@ loadAndRunFile filePath = defaultErrorHandler defaultFatalMessager defaultFlushO
         load LoadAllTargets
         setContext [IIModule $ mkModuleName "Test"]
         act <- unsafeCoerce <$> compileExpr "main"
-        liftIO act
+        g <- liftIO act
+        liftIO $ print (g :: ())
