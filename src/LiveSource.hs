@@ -1,4 +1,5 @@
-module Main where 
+module LiveSource where
+
 import Control.Applicative
 import DynFlags
 import GHC
@@ -12,30 +13,37 @@ import System.Directory
 import System.Time
 import System.Environment
 
-main = do
+newMain = do
        args <- getArgs
        case args of
-            [filePath] ->  repeatOnMofication Nothing filePath
+            [filePath] ->  repeatOnMofication filePath
             _ -> print "usage: filename_to_repeat_loading"
 
-repeatOnMofication lastedModified filePath = do
+repeatOnMofication filePath = repeatOnMofication' Nothing filePath
+
+	   
+repeatOnMofication' lastedModified filePath = do
        lastModified' <- getModificationTime filePath
        case lastedModified of 
         (Just a) -> case a < lastModified' of 
-            True -> exceptionToEither filePath
-            _ -> return ()
-        _ -> exceptionToEither filePath
+            True -> loadAndRunFilePrintingErrorMessage filePath
+            _ -> return Nothing
+        _ -> loadAndRunFilePrintingErrorMessage filePath
        threadDelay 10000
-       repeatOnMofication (Just lastModified') filePath
-        
-exceptionToEither filePath = do
-       res <- try (loadAndRunFile filePath)
-       case  res ::  Either SomeException () of
-         Left msg -> print msg
-         Right _ -> return ()
+       repeatOnMofication' (Just lastModified') filePath
+
+ntry :: IO a -> IO (Either SomeException a)	   
+ntry = try
+
+loadAndRunFilePrintingErrorMessage filePath = do
+       res <- ntry (loadAndRunFile filePath)
+       case  res  of
+         Left msg -> print msg >> return Nothing
+         Right v -> return (Just v)
 
 loadAndRunFile filePath = defaultErrorHandler defaultFatalMessager defaultFlushOut $ do
-    runGhc (Just libdir) $ do
+    oldcwd <- getCurrentDirectory
+    res <- runGhc (Just libdir) $ do
         dflags <- getSessionDynFlags
         setSessionDynFlags $ dflags { hscTarget = HscInterpreted
                                     , ghcLink   = LinkInMemory
@@ -43,6 +51,9 @@ loadAndRunFile filePath = defaultErrorHandler defaultFatalMessager defaultFlushO
         setTargets =<< sequence [guessTarget filePath Nothing]
         load LoadAllTargets
         setContext [IIModule $ mkModuleName "Test"]
-        act <- unsafeCoerce <$> compileExpr "main"
+        act <- unsafeCoerce <$> compileExpr "liveMain"
         g <- liftIO act
-        liftIO $ print (g :: ())
+        return g
+    setCurrentDirectory oldcwd
+    return res
+	
