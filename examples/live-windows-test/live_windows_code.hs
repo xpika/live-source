@@ -1,4 +1,3 @@
-module Test where
 import qualified Graphics.Win32
 import qualified System.Win32.DLL
 import qualified System.Win32.Types
@@ -21,7 +20,7 @@ newFunc hdc x y = do
     Graphics.Win32.fillRect hdc (0,0,500,500) b  
     Graphics.Win32.selectFont hdc font
     mapM_ (\(line,num) -> Graphics.Win32.textOut hdc (x-20) (y+(15*num)-20) line )
-        (zip ( ["hello" , "world" , "to you"] ) [1..] )
+        (zip ( ["hello" , "world" , ""] ) [1..] )
 
 liveMain = do
 		   x <- putStr ""

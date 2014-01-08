@@ -50,7 +50,7 @@ loadAndRunFile filePath = defaultErrorHandler defaultFatalMessager defaultFlushO
                                     }
         setTargets =<< sequence [guessTarget filePath Nothing]
         load LoadAllTargets
-        setContext [IIModule $ mkModuleName "Test"]
+        setContext [IIModule $ mkModuleName "Main"]
         act <- unsafeCoerce <$> compileExpr "liveMain"
         g <- liftIO act
         return g
