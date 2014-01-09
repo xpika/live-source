@@ -54,7 +54,7 @@ onPaint (_,_,w,h) hdc = do
        x | w==50     = 0
          | otherwise = (w-50) `div` 2
    action <- readIORef g
-   maybeFunction <- loadAndRunFilePrintingErrorMessage "live_windows_code.hs"
+   maybeFunction <- loadAndRunFilePrintingErrorMessage "live_win32_code.hs"
    case maybeFunction of 
 	(Just function) -> function hdc x (y -3)
 	_ -> return ()
