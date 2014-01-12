@@ -1,18 +1,3 @@
-%
-% (c) sof, 1999
-%
-
-Haskell version of "Hello, World" using the Win32 library.
-Demonstrates how the Win32 library can be put to use.
-
-Works with Hugs and GHC. To compile it up using the latter,
-do: "ghc -o main hello.lhs -syslib win32 -fglasgow-exts"
-
-For GHC 5.03:
-
-  ghc -package win32 hello.lhs -o hello.exe -optl "-Wl,--subsystem,windows"
-
-\begin{code}
 
 
 import qualified Graphics.Win32
@@ -23,16 +8,8 @@ import Foreign
 import System.Exit
 import Data.IORef
 import LiveSource
---import System.IO.Unsafe
-{-import Addr-}
-\end{code}
 
-Toplevel main just creates a window and pumps messages.
-The window procedure (wndProc) we pass in is partially
-applied with the user action that takes care of responding
-to repaint messages (WM_PAINT).
 
-\begin{code}
 main :: IO ()
 main =
   Graphics.Win32.allocaPAINTSTRUCT $ \ lpps -> do
@@ -59,13 +36,7 @@ onPaint (_,_,w,h) hdc = do
 	(Just function) -> function hdc x (y -3)
 	_ -> return ()
    return ()
-\end{code}
 
-Simple window procedure - one way to improve and generalise
-it would be to pass it a message map (represented as a
-finite map from WindowMessages to actions, perhaps).
-
-\begin{code}
 
 wndProc :: Graphics.Win32.LPPAINTSTRUCT
 	-> (Graphics.Win32.RECT -> Graphics.Win32.HDC -> IO ()) -- on paint action
@@ -133,5 +104,3 @@ paintWith lpps hwnd p =
     (Graphics.Win32.beginPaint hwnd lpps)
     (const $ Graphics.Win32.endPaint hwnd lpps >> Graphics.Win32.invalidateRect (Just hwnd) Nothing False)
     (p )
-
-\end{code}
