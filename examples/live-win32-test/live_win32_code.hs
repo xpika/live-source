@@ -8,6 +8,8 @@ import Control.Monad
 --import Data.Unsafe.Global
 import Data.IORef
 import Data.Time
+import qualified System.Win32.DLL
+import qualified Graphics.Win32.Control
 
 resources = unsafePerformIO $ newIORef Nothing
 
@@ -31,6 +33,11 @@ newFunc cached hwnd hdc x y = do
 	    b <- Graphics.Win32.createSolidBrush (Graphics.Win32.rgb 0 0 255)
 	    let resources'' = (font,b)
 	    writeIORef resources (Just resources'')
+                       
+            mainInstance <- System.Win32.DLL.getModuleHandle Nothing
+            Graphics.Win32.createButton (reverse "hello") (Graphics.Win32.wS_CHILD +Graphics.Win32.wS_VISIBLE)  Graphics.Win32.Control.bS_PUSHBUTTON (Just 0) (Just 0) (Just 100) (Just 100) hwnd Nothing mainInstance
+            Graphics.Win32.createButton "hello" (Graphics.Win32.wS_CHILD +Graphics.Win32.wS_VISIBLE)  Graphics.Win32.Control.bS_PUSHBUTTON (Just 200) (Just 200) (Just 100) (Just 100) hwnd Nothing mainInstance
+            
 	    return resources''
 	Just x -> return x
     Graphics.Win32.fillRect hdc (0,0,500,500) b  
