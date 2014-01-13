@@ -1,5 +1,7 @@
 module LiveSource where
 
+{-# OPTIONS_GHC -fno-cse #-} 
+
 import Control.Applicative
 import DynFlags
 import GHC
@@ -14,6 +16,7 @@ import System.Time
 import System.Environment
 import Data.IORef 
 import System.IO.Unsafe
+import Data.Unsafe.Global
 
 newMain = do
        args <- getArgs
@@ -34,29 +37,68 @@ repeatOnMofication' lastedModified filePath = do
        threadDelay 10000
        repeatOnMofication' (Just lastModified') filePath
 
+
 ntry :: IO a -> IO (Either SomeException a)	   
 ntry = try
 
-
-loadAndRunFilePrintingErrorMessageUnsafeGlobal = unsafePerformIO $ newIORef Nothing                    
+{-# NOINLINE loadAndRunFilePrintingErrorMessageUnsafeGlobal #-}
+loadAndRunFilePrintingErrorMessageUnsafeGlobal = newGlobal Nothing                    
 loadAndRunFilePrintingErrorMessageUnsafe filePath = do
-    let loadAndRunFilePrintingErrorMessageUnsafeGlobal' = loadAndRunFilePrintingErrorMessageUnsafeGlobal
     maybeLastModTime <- readIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal
     lastModified' <- getModificationTime filePath
     case maybeLastModTime of
         Nothing -> do
                    putStrLn "loaded"
-                   writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal' (Just lastModified')
-                   res <- loadAndRunFilePrintingErrorMessage filePath
-                   return res
+                   writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal (Just lastModified')
+                   loadAndRunFilePrintingErrorMessage filePath
         (Just lastModified) -> case lastModified < lastModified' of 
             True -> do
                     putStrLn "reloaded"
-                    writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal' (Just lastModified')
-                    res <- loadAndRunFilePrintingErrorMessage filePath
-                    return res
+                    writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal (Just lastModified')
+                    loadAndRunFilePrintingErrorMessage filePath
             False -> return Nothing
+            
+loadAndRunFilePrintingErrorMessageUnsafeWithCacheGlobal = newGlobal Nothing                    
+loadAndRunFilePrintingErrorMessageUnsafeWithCache filePath = do
+       maybeLastModTime <- readIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal
+       lastModified' <- getModificationTime filePath
+       case maybeLastModTime of
+                Nothing -> do
+                        putStrLn "loaded"
+                        writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal (Just lastModified')
+                        res <- loadAndRunFilePrintingErrorMessage filePath
+                        writeIORef loadAndRunFilePrintingErrorMessageUnsafeWithCacheGlobal res
+                        return (res,0)
+                (Just lastModified) -> case lastModified < lastModified' of 
+                                                    True -> do
+                                                            putStrLn "reloaded"
+                                                            writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal (Just lastModified')
+                                                            writeIORef getFileChangedUnsafeGlobal (Just lastModified') 
+                                                            res <- loadAndRunFilePrintingErrorMessage filePath
+                                                            writeIORef loadAndRunFilePrintingErrorMessageUnsafeWithCacheGlobal res
+                                                            return (res,1)
+                                                    False -> do 
+                                                             res <- readIORef loadAndRunFilePrintingErrorMessageUnsafeWithCacheGlobal
+                                                             return (res,2)
+            
+            
+{-# NOINLINE getFileChangedUnsafeGlobal #-}
+getFileChangedUnsafeGlobal = newGlobal Nothing
+getFileChangedUnsafe filePath = do
+    maybeLastModTime <- readIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal
+    lastModified' <- getModificationTime filePath
+    case maybeLastModTime of
+        Nothing -> do
+                   writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal (Just lastModified')
+                   return True
+        (Just lastModified) -> case lastModified < lastModified' of 
+            True -> do
+                    writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal (Just lastModified')
+                    return True
+            False -> return False
 
+            
+            
 loadAndRunFilePrintingErrorMessage filePath = do
        res <- ntry (loadAndRunFile filePath)
        case  res  of
