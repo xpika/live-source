@@ -17,6 +17,7 @@ import System.Environment
 import Data.IORef 
 import System.IO.Unsafe
 import Data.Unsafe.Global
+import Control.Monad
 
 newMain = do
        args <- getArgs
@@ -24,19 +25,30 @@ newMain = do
             [filePath] ->  repeatOnMofication filePath
             _ -> print "usage: filename_to_repeat_loading"
 
-repeatOnMofication filePath = repeatOnMofication' Nothing filePath
+checkFileExists fp = do 
+  exist <- doesFileExist fp
+  when (not exist) (throw $ AssertionFailed ("file "++fp++" not found"))
 
-	   
-repeatOnMofication' lastedModified filePath = do
-       lastModified' <- getModificationTime filePath
-       case lastedModified of 
-        (Just a) -> case a < lastModified' of 
-            True -> loadAndRunFilePrintingErrorMessage filePath
+repeatOnMofication filePath = do
+ checkFileExists filePath
+ repeatOnMofication' Nothing filePath
+
+repeatOnMofication' lastModified filePath = do
+       lastModified' <- do 
+                        res <- ntry (getModificationTime filePath) 
+                        case res of
+                          (Right x) -> return (Just x)
+                          _ -> return Nothing
+       case lastModified of 
+         (Just a) -> case ((<) <$> lastModified <*> lastModified') of 
+            (Just True) -> loadAndRunFilePrintingErrorMessage filePath
             _ -> return Nothing
-        _ -> loadAndRunFilePrintingErrorMessage filePath
+         _ -> loadAndRunFilePrintingErrorMessage filePath
        threadDelay 10000
-       repeatOnMofication' (Just lastModified') filePath
+       repeatOnMofication' lastModified' filePath
 
+ntry2 :: IO a -> IO (Either IOError a)	   
+ntry2 = try
 
 ntry :: IO a -> IO (Either SomeException a)	   
 ntry = try
@@ -96,13 +108,14 @@ getFileChangedUnsafe filePath = do
                     writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal (Just lastModified')
                     return True
             False -> return False
-
-            
             
 loadAndRunFilePrintingErrorMessage filePath = do
        res <- ntry (loadAndRunFile filePath)
        case  res  of
-         Left msg -> print msg >> return Nothing
+         Left msg -> do 
+                     print msg
+                     checkFileExists filePath
+                     return Nothing
          Right v -> return (Just v)
 
 loadAndRunFile filePath = defaultErrorHandler defaultFatalMessager defaultFlushOut $ do
@@ -121,3 +134,7 @@ loadAndRunFile filePath = defaultErrorHandler defaultFatalMessager defaultFlushO
     setCurrentDirectory oldcwd
     return res
 	
+
+
+handler :: IOError -> IO ()  
+handler e = putStrLn "Whoops, had some trouble!"  
