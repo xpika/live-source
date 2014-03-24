@@ -1,3 +1,4 @@
 rm *.o
-rm example
-ghc --make example
+rm LiveX11Example
+ghc --make LiveX11Example
+rm *.o

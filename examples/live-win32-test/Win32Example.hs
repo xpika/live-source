@@ -119,5 +119,5 @@ paintWith lpps hwnd p =
   bracket
     (Graphics.Win32.beginPaint hwnd lpps)
     (const $ Graphics.Win32.endPaint hwnd lpps  {-  >> Graphics.Win32.invalidateRect (Just hwnd) Nothing False -} )
-    (p )
-   
+    p
+

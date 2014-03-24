@@ -47,30 +47,29 @@ createAWindow windowName = do
 
 axis = (Vector3 1 1 (1::GLfloat))
 
-interleave =  (concat .) . zipWith (\x y-> [x,y]) 
 
 list = [-0.5,-0.45..0.5]
 display thingy = do 
   clear [ColorBuffer , DepthBuffer]
   loadIdentity
   x1 <- run (readIORef thingy >>= \k -> k())
-  --rotate x1 $ axis
   maybeFunction <- loadAndRunFilePrintingErrorMessageUnsafeWithCache "live_code.hs"
    
   case maybeFunction of 
     (Just function,cached) -> function Nothing
     _ -> return ()
+  {-
   renderPrimitive Points $ 
     sequence $ interleave rainbow grid
+  -}
   swapBuffers
   flush
 
-
+{-
+interleave =  (concat .) . zipWith (\x y-> [x,y]) 
+rainbow  =  cycle $ liftM3 to_color colors colors colors
 to_color x y z = do currentColor $= Color4 x y z 1
 colors   =  [0,0.25..1]
-rainbow  =  cycle $ liftM3 to_color colors colors colors
-
-
-
 grid = do (x,y,z) <- liftM3 (,,) list list list
           return (vertex (Vertex3 (x::GLfloat) y z))
+-}

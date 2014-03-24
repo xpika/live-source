@@ -25,33 +25,9 @@ newMain = do
             [filePath] ->  repeatOnMofication filePath
             _ -> print "usage: filename_to_repeat_loading"
 
-checkFileExists fp = do 
-  exist <- doesFileExist fp
-  when (not exist) (throw $ AssertionFailed ("file "++fp++" not found"))
-
-repeatOnMofication filePath = do
- checkFileExists filePath
- repeatOnMofication' Nothing filePath
-
-repeatOnMofication' lastModified filePath = do
-       lastModified' <- do 
-                        res <- ntry (getModificationTime filePath) 
-                        case res of
-                          (Right x) -> return (Just x)
-                          _ -> return Nothing
-       case lastModified of 
-         (Just a) -> case ((<) <$> lastModified <*> lastModified') of 
-            (Just True) -> loadAndRunFilePrintingErrorMessage filePath
-            _ -> return Nothing
-         _ -> loadAndRunFilePrintingErrorMessage filePath
-       threadDelay 10000
-       repeatOnMofication' lastModified' filePath
-
 ntry2 :: IO a -> IO (Either IOError a)	   
 ntry2 = try
 
-ntry :: IO a -> IO (Either SomeException a)	   
-ntry = try
 
 {-# NOINLINE loadAndRunFilePrintingErrorMessageUnsafeGlobal #-}
 loadAndRunFilePrintingErrorMessageUnsafeGlobal = newGlobal Nothing                    
@@ -69,29 +45,35 @@ loadAndRunFilePrintingErrorMessageUnsafe filePath = do
                     writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal (Just lastModified')
                     loadAndRunFilePrintingErrorMessage filePath
             False -> return Nothing
+
+       
             
 loadAndRunFilePrintingErrorMessageUnsafeWithCacheGlobal = newGlobal Nothing                    
 loadAndRunFilePrintingErrorMessageUnsafeWithCache filePath = do
        maybeLastModTime <- readIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal
-       lastModified' <- getModificationTime filePath
-       case maybeLastModTime of
-                Nothing -> do
-                        putStrLn "loaded"
-                        writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal (Just lastModified')
-                        res <- loadAndRunFilePrintingErrorMessage filePath
-                        writeIORef loadAndRunFilePrintingErrorMessageUnsafeWithCacheGlobal res
-                        return (res,0)
-                (Just lastModified) -> case lastModified < lastModified' of 
-                                                    True -> do
-                                                            putStrLn "reloaded"
-                                                            writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal (Just lastModified')
-                                                            writeIORef getFileChangedUnsafeGlobal (Just lastModified') 
-                                                            res <- loadAndRunFilePrintingErrorMessage filePath
-                                                            writeIORef loadAndRunFilePrintingErrorMessageUnsafeWithCacheGlobal res
-                                                            return (res,1)
-                                                    False -> do 
-                                                             res <- readIORef loadAndRunFilePrintingErrorMessageUnsafeWithCacheGlobal
-                                                             return (res,2)
+       lastModifiedSafe' <- getModificationTimeSafe filePath
+
+       case lastModifiedSafe' of 
+         Just lastModified' ->
+           case maybeLastModTime of
+                    Nothing -> do
+                            putStrLn "loaded"
+                            writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal (Just lastModified')
+                            res <- loadAndRunFilePrintingErrorMessage filePath
+                            writeIORef loadAndRunFilePrintingErrorMessageUnsafeWithCacheGlobal res
+                            return (res,0)
+                    (Just lastModified) -> case lastModified < lastModified' of 
+                                                  True -> do
+                                                          putStrLn "reloaded"
+                                                          writeIORef loadAndRunFilePrintingErrorMessageUnsafeGlobal (Just lastModified')
+                                                          writeIORef getFileChangedUnsafeGlobal (Just lastModified') 
+                                                          res <- loadAndRunFilePrintingErrorMessage filePath
+                                                          writeIORef loadAndRunFilePrintingErrorMessageUnsafeWithCacheGlobal res
+                                                          return (res,1)
+                                                  False -> do 
+                                                           res <- readIORef loadAndRunFilePrintingErrorMessageUnsafeWithCacheGlobal
+                                                           return (res,2)
+         _ -> return (Nothing,3) 
             
             
 {-# NOINLINE getFileChangedUnsafeGlobal #-}
@@ -118,6 +100,33 @@ loadAndRunFilePrintingErrorMessage filePath = do
                      return Nothing
          Right v -> return (Just v)
 
+
+repeatOnMofication filePath = do
+ checkFileExists filePath
+ repeatOnMofication' Nothing filePath
+
+getModificationTimeSafe filePath = do
+  res <- ntry (getModificationTime filePath) 
+  case res of
+    (Right x) -> return (Just x)
+    _ -> return Nothing
+
+
+repeatOnMofication' lastModified filePath = do
+  lastModified' <- getModificationTimeSafe filePath
+  case lastModified of 
+    (Just a) -> case ((<) <$> lastModified <*> lastModified') of 
+       (Just True) -> loadAndRunFilePrintingErrorMessage filePath
+       _ -> return Nothing
+    _ -> loadAndRunFilePrintingErrorMessage filePath
+  threadDelay 10000
+  repeatOnMofication' lastModified' filePath
+
+
+checkFileExists fp = do 
+  exist <- doesFileExist fp
+  when (not exist) (throw $ AssertionFailed ("file "++fp++" not found"))
+
 loadAndRunFile filePath = defaultErrorHandler defaultFatalMessager defaultFlushOut $ do
     oldcwd <- getCurrentDirectory
     res <- runGhc (Just libdir) $ do
@@ -133,8 +142,6 @@ loadAndRunFile filePath = defaultErrorHandler defaultFatalMessager defaultFlushO
         return g
     setCurrentDirectory oldcwd
     return res
-	
 
-
-handler :: IOError -> IO ()  
-handler e = putStrLn "Whoops, had some trouble!"  
+ntry :: IO a -> IO (Either SomeException a)	   
+ntry = try

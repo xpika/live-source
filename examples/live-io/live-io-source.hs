@@ -1,4 +1,5 @@
 import Data.Numbers.Primes
+import System.Cmd
 
 liveMain = do 
-       print [1..100]
+       print ( map (*10) [1,2,3,4,5])

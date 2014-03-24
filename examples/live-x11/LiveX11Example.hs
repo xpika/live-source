@@ -1,6 +1,7 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Main where
+
 import Graphics.X11.Xlib
 import System.Exit (exitWith, ExitCode(..))
 import Control.Concurrent (threadDelay)
@@ -26,7 +27,7 @@ main = do
  mapWindow dpy win
  --loadAndRunFilePrintingErrorMessage "example2.hs"
  forever $ do
-   maybeFunction <- loadAndRunFilePrintingErrorMessageUnsafeWithCache "example2.hs"
+   maybeFunction <- loadAndRunFilePrintingErrorMessageUnsafeWithCache "LiveX11Source.hs"
    case maybeFunction of  
      (Just function,cached) -> function dpy win gc
      _ -> return ()
