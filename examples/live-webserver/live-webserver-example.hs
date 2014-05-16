@@ -11,10 +11,10 @@ import Data.Monoid (mconcat)
 main = scotty 3000 $ do
   get "/:word" $ do
     beam <- param "word"
-    maybeTextoutput <- liftIO $ loadAndRunFilePrintingErrorMessage "live-webserver-source.hs"
+    maybeTextoutput <- liftIO $ loadAndRunFilePrintingErrorMessage (unpack beam)
     let textoutput = case maybeTextoutput of 
                         (Just to) -> to
                         _ ->  ""
-    html $ mconcat [pack textoutput,beam]
+    html $ mconcat [pack textoutput]
 
     

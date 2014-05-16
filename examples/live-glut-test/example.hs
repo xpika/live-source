@@ -13,7 +13,6 @@ modifyIORef x y = lift (IORef.modifyIORef x y)
 
 type GLFloat = Foreign.C.Types.CFloat
 
-
 type ContIO r a = ContT r IO a
 defines :: ContIO r (IORef.IORef (() -> ContIO GLFloat GLFloat), ContIO GLFloat GLFloat)
 defines = do
