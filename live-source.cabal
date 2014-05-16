@@ -54,5 +54,5 @@ library
   -- other-modules:       
   
   -- Other library packages from which modules are imported.
-  build-depends:       base < 10000 ghc-paths ==0.1.*, directory ==1.2.*, old-time ==1.1.* ,ghc ,global
+  build-depends:       base <10000,ghc-paths ==0.1.*, directory ==1.2.*, old-time ==1.1.* ,ghc ,global
   
