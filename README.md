@@ -18,7 +18,7 @@ eg :
 
 ```haskell
 Prelude> import LiveSource
-Prelude LiveSource> repeatOnMofication "test.hs"
+Prelude LiveSource> repeatOnModification "test.hs"
 2
 ```
 
@@ -35,7 +35,7 @@ Ghc should now run the IO.
 
 ```haskell
 Prelude> import LiveSource
-Prelude LiveSource> repeatOnMofication "test.hs"
+Prelude LiveSource> repeatOnModification "test.hs"
 2
 [1,2,3,4,5,6,7,8,9,10]
 
