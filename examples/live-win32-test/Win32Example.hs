@@ -14,7 +14,6 @@ import Control.Concurrent
 import Data.Unsafe.Global 
 import Control.Monad
 
-
 main :: IO ()
 main =
   Graphics.Win32.allocaPAINTSTRUCT $ \ lpps -> do

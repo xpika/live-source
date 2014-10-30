@@ -22,7 +22,7 @@ import Control.Monad
 newMain = do
        args <- getArgs
        case args of
-            [filePath] ->  repeatOnMofication filePath
+            [filePath] ->  repeatOnModification filePath
             _ -> print "usage: filename_to_repeat_loading"
 
 ntry2 :: IO a -> IO (Either IOError a)	   
@@ -101,9 +101,9 @@ loadAndRunFilePrintingErrorMessage filePath = do
          Right v -> return (Just v)
 
 
-repeatOnMofication filePath = do
+repeatOnModification filePath = do
  checkFileExists filePath
- repeatOnMofication' Nothing filePath
+ repeatOnModification' Nothing filePath
 
 getModificationTimeSafe filePath = do
   res <- ntry (getModificationTime filePath) 
@@ -112,7 +112,7 @@ getModificationTimeSafe filePath = do
     _ -> return Nothing
 
 
-repeatOnMofication' lastModified filePath = do
+repeatOnModification' lastModified filePath = do
   lastModified' <- getModificationTimeSafe filePath
   case lastModified of 
     (Just a) -> case ((<) <$> lastModified <*> lastModified') of 
@@ -120,7 +120,7 @@ repeatOnMofication' lastModified filePath = do
        _ -> return Nothing
     _ -> loadAndRunFilePrintingErrorMessage filePath
   threadDelay 10000
-  repeatOnMofication' lastModified' filePath
+  repeatOnModification' lastModified' filePath
 
 
 checkFileExists fp = do 

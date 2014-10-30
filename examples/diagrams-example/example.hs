@@ -1,5 +1,5 @@
 import LiveSource
 
 main = do
-       repeatOnMofication "source.hs"
+       repeatOnModification "source.hs"
        putStrLn "end"
