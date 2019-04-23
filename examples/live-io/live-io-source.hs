@@ -1,4 +1,3 @@
-import Data.Numbers.Primes
 import System.Cmd
 import Data.List
 import Control.Monad

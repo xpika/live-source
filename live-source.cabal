@@ -10,7 +10,7 @@ name:                live-source
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             0.1.0.0
+version:             0.1.0.1
 
 -- A short (one-line) description of the package.
 synopsis:            Live coding
@@ -54,5 +54,10 @@ library
   -- other-modules:       
   
   -- Other library packages from which modules are imported.
-  build-depends:       base <10000,ghc-paths ==0.1.*, directory ==1.2.*, old-time ==1.1.* ,ghc ,global
+  build-depends:       base <10000
+                       ,ghc-paths <10000
+                        , ghc <10000
+                       , directory <10000
+                      , old-time <10000
+                       ,global
   
